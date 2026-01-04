@@ -1,0 +1,19 @@
+{
+  "name": "bergvlei",
+  "version": "1.0.0",
+  "description": "AI-powered riddle game",
+  "private": true,
+  "scripts": {
+    "mobile": "cd mobile && npm start",
+    "mobile:android": "cd mobile && npm run android",
+    "mobile:ios": "cd mobile && npm run ios",
+    "mobile:web": "cd mobile && npm run web",
+    "mobile:install": "cd mobile && npm install"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/BoksBurger/bergvlei.git"
+  },
+  "author": "Burger <burger@boksburger.co.za>",
+  "license": "UNLICENSED"
+}
