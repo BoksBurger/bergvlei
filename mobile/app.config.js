@@ -36,6 +36,7 @@ module.exports = {
     ],
     extra: {
       GEMINI_KEY: process.env.GEMINI_KEY,
+      API_URL: process.env.API_URL,
     }
   }
 };

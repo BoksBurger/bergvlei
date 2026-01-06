@@ -11,7 +11,7 @@ export default function PlayScreen() {
     router.push('/game');
   };
 
-  const handleDifficultyChange = (difficulty: 'easy' | 'medium' | 'hard') => {
+  const handleDifficultyChange = (difficulty: 'EASY' | 'MEDIUM' | 'HARD') => {
     setDifficulty(difficulty);
   };
 
@@ -40,14 +40,14 @@ export default function PlayScreen() {
             <TouchableOpacity
               style={[
                 styles.difficultyButton,
-                currentDifficulty === 'easy' && styles.difficultyButtonActive,
+                currentDifficulty === 'EASY' && styles.difficultyButtonActive,
               ]}
-              onPress={() => handleDifficultyChange('easy')}
+              onPress={() => handleDifficultyChange('EASY')}
             >
               <Text
                 style={[
                   styles.difficultyButtonText,
-                  currentDifficulty === 'easy' && styles.difficultyButtonTextActive,
+                  currentDifficulty === 'EASY' && styles.difficultyButtonTextActive,
                 ]}
               >
                 Easy
@@ -56,14 +56,14 @@ export default function PlayScreen() {
             <TouchableOpacity
               style={[
                 styles.difficultyButton,
-                currentDifficulty === 'medium' && styles.difficultyButtonActive,
+                currentDifficulty === 'MEDIUM' && styles.difficultyButtonActive,
               ]}
-              onPress={() => handleDifficultyChange('medium')}
+              onPress={() => handleDifficultyChange('MEDIUM')}
             >
               <Text
                 style={[
                   styles.difficultyButtonText,
-                  currentDifficulty === 'medium' && styles.difficultyButtonTextActive,
+                  currentDifficulty === 'MEDIUM' && styles.difficultyButtonTextActive,
                 ]}
               >
                 Medium
@@ -72,14 +72,14 @@ export default function PlayScreen() {
             <TouchableOpacity
               style={[
                 styles.difficultyButton,
-                currentDifficulty === 'hard' && styles.difficultyButtonActive,
+                currentDifficulty === 'HARD' && styles.difficultyButtonActive,
               ]}
-              onPress={() => handleDifficultyChange('hard')}
+              onPress={() => handleDifficultyChange('HARD')}
             >
               <Text
                 style={[
                   styles.difficultyButtonText,
-                  currentDifficulty === 'hard' && styles.difficultyButtonTextActive,
+                  currentDifficulty === 'HARD' && styles.difficultyButtonTextActive,
                 ]}
               >
                 Hard

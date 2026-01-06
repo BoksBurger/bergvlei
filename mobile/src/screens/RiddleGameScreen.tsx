@@ -13,9 +13,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useGameStore } from '@stores/gameStore';
-import { generateNewRiddle, generateHint, validateAnswer } from '@services/ai';
-import { POINTS_PER_RIDDLE, HINT_PENALTY, FREE_DAILY_RIDDLE_LIMIT } from '@constants/game';
-import { Riddle } from '@types/riddle';
+import { FREE_DAILY_RIDDLE_LIMIT } from '@constants/game';
 
 export default function RiddleGameScreen() {
   const {
@@ -25,16 +23,13 @@ export default function RiddleGameScreen() {
     hintsUsed,
     score,
     isLoading,
+    error,
     currentDifficulty,
-    setCurrentRiddle,
-    addHint,
-    clearHints,
-    addAttempt,
-    incrementRiddlesSolved,
-    useHint: incrementHintCount,
-    addScore,
-    setLoading,
+    fetchNewRiddle,
+    submitAnswer,
+    requestHint,
     resetCurrentGame,
+    clearError,
   } = useGameStore();
 
   const [userAnswer, setUserAnswer] = useState('');
@@ -42,7 +37,6 @@ export default function RiddleGameScreen() {
     type: 'success' | 'error' | 'close' | null;
     message: string;
   }>({ type: null, message: '' });
-  const [startTime, setStartTime] = useState<number>(Date.now());
 
   // Load initial riddle
   useEffect(() => {
@@ -51,68 +45,26 @@ export default function RiddleGameScreen() {
     }
   }, []);
 
-  const loadNewRiddle = async () => {
-    try {
-      setLoading(true);
-      setFeedback({ type: null, message: '' });
-      clearHints();
-      setUserAnswer('');
-      setStartTime(Date.now());
-
-      const riddle = await generateNewRiddle(currentDifficulty);
-
-      const newRiddle: Riddle = {
-        id: Date.now().toString(),
-        question: riddle.question,
-        answer: riddle.answer,
-        difficulty: currentDifficulty,
-        hints: [],
-        createdAt: new Date(),
-      };
-
-      setCurrentRiddle(newRiddle);
-    } catch (error) {
-      Alert.alert('Error', 'Failed to load riddle. Please try again.');
-      console.error('Load riddle error:', error);
-    } finally {
-      setLoading(false);
+  // Handle errors from the store
+  useEffect(() => {
+    if (error) {
+      Alert.alert('Error', error);
+      clearError();
     }
+  }, [error]);
+
+  const loadNewRiddle = async () => {
+    setFeedback({ type: null, message: '' });
+    setUserAnswer('');
+    await fetchNewRiddle();
   };
 
   const handleGetHint = async () => {
     if (!currentRiddle) return;
 
-    // Check if user has reached free limit
-    if (riddlesSolvedToday >= FREE_DAILY_RIDDLE_LIMIT) {
-      Alert.alert(
-        'Daily Limit Reached',
-        'Upgrade to Premium for unlimited riddles and hints!',
-        [
-          { text: 'Maybe Later', style: 'cancel' },
-          { text: 'Upgrade', onPress: () => console.log('Navigate to premium') },
-        ]
-      );
-      return;
-    }
-
-    try {
-      setLoading(true);
-
-      const hintResponse = await generateHint({
-        riddle: currentRiddle.question,
-        previousHints: currentHints,
-        difficulty: currentDifficulty,
-      });
-
-      addHint(hintResponse.hint);
-      incrementHintCount();
-
-      Alert.alert('Hint', hintResponse.hint, [{ text: 'Got it!' }]);
-    } catch (error) {
-      Alert.alert('Error', 'Failed to generate hint. Please try again.');
-      console.error('Hint error:', error);
-    } finally {
-      setLoading(false);
+    const hint = await requestHint();
+    if (hint) {
+      Alert.alert('Hint', hint, [{ text: 'Got it!' }]);
     }
   };
 
@@ -122,56 +74,23 @@ export default function RiddleGameScreen() {
       return;
     }
 
-    try {
-      setLoading(true);
+    const result = await submitAnswer(userAnswer.trim());
 
-      const validation = await validateAnswer(userAnswer.trim(), currentRiddle.answer);
-      const timeSpent = Math.floor((Date.now() - startTime) / 1000);
-
-      // Record attempt
-      addAttempt({
-        riddleId: currentRiddle.id,
-        userAnswer: userAnswer.trim(),
-        isCorrect: validation.isCorrect,
-        hintsUsed: currentHints.length,
-        timeSpent,
-        attemptedAt: new Date(),
+    if (result.correct) {
+      setFeedback({
+        type: 'success',
+        message: result.message,
       });
 
-      if (validation.isCorrect) {
-        // Calculate score
-        const basePoints = POINTS_PER_RIDDLE[currentDifficulty];
-        const hintPenalty = currentHints.length * HINT_PENALTY;
-        const finalPoints = Math.max(0, basePoints - hintPenalty);
-
-        addScore(finalPoints);
-        incrementRiddlesSolved();
-
-        setFeedback({
-          type: 'success',
-          message: `Correct! +${finalPoints} points`,
-        });
-
-        // Auto-load next riddle after delay
-        setTimeout(() => {
-          loadNewRiddle();
-        }, 2000);
-      } else if (validation.similarity > 0.6) {
-        setFeedback({
-          type: 'close',
-          message: "You're close! Try again.",
-        });
-      } else {
-        setFeedback({
-          type: 'error',
-          message: 'Incorrect. Try again or get a hint!',
-        });
-      }
-    } catch (error) {
-      Alert.alert('Error', 'Failed to validate answer. Please try again.');
-      console.error('Validation error:', error);
-    } finally {
-      setLoading(false);
+      // Auto-load next riddle after delay
+      setTimeout(() => {
+        loadNewRiddle();
+      }, 2000);
+    } else {
+      setFeedback({
+        type: 'error',
+        message: result.message,
+      });
     }
   };
 
@@ -221,7 +140,7 @@ export default function RiddleGameScreen() {
             <View style={styles.statBox}>
               <Text style={styles.statLabel}>Difficulty</Text>
               <Text style={[styles.statValue, styles.difficultyBadge]}>
-                {currentDifficulty.toUpperCase()}
+                {currentDifficulty}
               </Text>
             </View>
           </View>

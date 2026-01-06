@@ -1,18 +1,27 @@
 import { create } from 'zustand';
 import { Riddle, RiddleAttempt } from '../types/riddle';
+import { api, RiddleResponse, UserStats } from '../services/api';
 
 interface GameState {
-  currentRiddle: Riddle | null;
+  currentRiddle: RiddleResponse | null;
   currentHints: string[];
   riddleAttempts: RiddleAttempt[];
   riddlesSolvedToday: number;
   hintsUsed: number;
+  hintsRemaining: number;
   score: number;
   isLoading: boolean;
-  currentDifficulty: 'easy' | 'medium' | 'hard';
+  error: string | null;
+  currentDifficulty: 'EASY' | 'MEDIUM' | 'HARD';
+  stats: UserStats | null;
+  riddleStartTime: number | null;
 
   // Actions
-  setCurrentRiddle: (riddle: Riddle) => void;
+  fetchNewRiddle: (difficulty?: 'EASY' | 'MEDIUM' | 'HARD') => Promise<boolean>;
+  submitAnswer: (answer: string) => Promise<{ correct: boolean; message: string }>;
+  requestHint: () => Promise<string | null>;
+  fetchStats: () => Promise<void>;
+  setCurrentRiddle: (riddle: RiddleResponse | null) => void;
   addHint: (hint: string) => void;
   clearHints: () => void;
   addAttempt: (attempt: RiddleAttempt) => void;
@@ -20,20 +29,161 @@ interface GameState {
   useHint: () => void;
   addScore: (points: number) => void;
   setLoading: (loading: boolean) => void;
-  setDifficulty: (difficulty: 'easy' | 'medium' | 'hard') => void;
+  setDifficulty: (difficulty: 'EASY' | 'MEDIUM' | 'HARD') => void;
   resetDailyProgress: () => void;
   resetCurrentGame: () => void;
+  clearError: () => void;
 }
 
-export const useGameStore = create<GameState>((set) => ({
+export const useGameStore = create<GameState>((set, get) => ({
   currentRiddle: null,
   currentHints: [],
   riddleAttempts: [],
   riddlesSolvedToday: 0,
   hintsUsed: 0,
+  hintsRemaining: 3,
   score: 0,
   isLoading: false,
-  currentDifficulty: 'easy',
+  error: null,
+  currentDifficulty: 'EASY',
+  stats: null,
+  riddleStartTime: null,
+
+  // Fetch a new riddle from backend
+  fetchNewRiddle: async (difficulty?: 'EASY' | 'MEDIUM' | 'HARD') => {
+    set({ isLoading: true, error: null });
+
+    try {
+      const diff = difficulty || get().currentDifficulty;
+      const response = await api.getRiddle(diff);
+
+      if (response.success && response.data) {
+        set({
+          currentRiddle: response.data,
+          currentHints: [],
+          hintsUsed: 0,
+          hintsRemaining: 3,
+          riddleStartTime: Date.now(),
+          isLoading: false,
+          error: null,
+        });
+        return true;
+      } else {
+        set({
+          error: response.error?.message || 'Failed to fetch riddle',
+          isLoading: false,
+        });
+        return false;
+      }
+    } catch (error) {
+      set({
+        error: error instanceof Error ? error.message : 'An error occurred',
+        isLoading: false,
+      });
+      return false;
+    }
+  },
+
+  // Submit answer to backend
+  submitAnswer: async (answer: string) => {
+    const state = get();
+    if (!state.currentRiddle || !state.riddleStartTime) {
+      return { correct: false, message: 'No active riddle' };
+    }
+
+    set({ isLoading: true, error: null });
+
+    try {
+      const timeSpent = Math.floor((Date.now() - state.riddleStartTime) / 1000);
+      const response = await api.submitAnswer({
+        riddleId: state.currentRiddle.id,
+        answer,
+        timeSpent,
+        hintsUsed: state.hintsUsed,
+      });
+
+      if (response.success && response.data) {
+        const { correct, score, totalScore, riddlesSolved, streak, message } = response.data;
+
+        if (correct) {
+          set((state) => ({
+            score: totalScore,
+            riddlesSolvedToday: riddlesSolved,
+            isLoading: false,
+          }));
+        } else {
+          set({ isLoading: false });
+        }
+
+        return { correct, message };
+      } else {
+        set({
+          error: response.error?.message || 'Failed to submit answer',
+          isLoading: false,
+        });
+        return { correct: false, message: response.error?.message || 'Failed to submit answer' };
+      }
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'An error occurred';
+      set({
+        error: errorMessage,
+        isLoading: false,
+      });
+      return { correct: false, message: errorMessage };
+    }
+  },
+
+  // Request a hint from backend
+  requestHint: async () => {
+    const state = get();
+    if (!state.currentRiddle) {
+      return null;
+    }
+
+    set({ isLoading: true, error: null });
+
+    try {
+      const response = await api.getHint(state.currentRiddle.id);
+
+      if (response.success && response.data) {
+        const { hint, hintsRemaining } = response.data;
+
+        set((state) => ({
+          currentHints: [...state.currentHints, hint],
+          hintsUsed: state.hintsUsed + 1,
+          hintsRemaining,
+          isLoading: false,
+        }));
+
+        return hint;
+      } else {
+        set({
+          error: response.error?.message || 'Failed to get hint',
+          isLoading: false,
+        });
+        return null;
+      }
+    } catch (error) {
+      set({
+        error: error instanceof Error ? error.message : 'An error occurred',
+        isLoading: false,
+      });
+      return null;
+    }
+  },
+
+  // Fetch user stats
+  fetchStats: async () => {
+    try {
+      const response = await api.getStats();
+
+      if (response.success && response.data) {
+        set({ stats: response.data });
+      }
+    } catch (error) {
+      console.error('Error fetching stats:', error);
+    }
+  },
 
   setCurrentRiddle: (riddle) => set({ currentRiddle: riddle }),
 
@@ -72,5 +222,8 @@ export const useGameStore = create<GameState>((set) => ({
     currentRiddle: null,
     currentHints: [],
     hintsUsed: 0,
+    riddleStartTime: null,
   }),
+
+  clearError: () => set({ error: null }),
 }));
