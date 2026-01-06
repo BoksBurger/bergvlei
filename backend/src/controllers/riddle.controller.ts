@@ -1,0 +1,77 @@
+import { Response, NextFunction } from 'express';
+import { AuthRequest } from '../types';
+import { riddleService } from '../services/riddle.service';
+import { DifficultyLevel } from '../types';
+
+export class RiddleController {
+  async getRiddle(req: AuthRequest, res: Response, next: NextFunction) {
+    try {
+      const { difficulty } = req.query;
+      const riddle = await riddleService.getRandomRiddle(
+        req.userId!,
+        difficulty as DifficultyLevel
+      );
+
+      res.json({
+        success: true,
+        data: { riddle },
+      });
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  async submitAnswer(req: AuthRequest, res: Response, next: NextFunction) {
+    try {
+      const { riddleId, answer, timeSpent, hintsUsed } = req.body;
+      const result = await riddleService.submitAnswer(
+        req.userId!,
+        riddleId,
+        answer,
+        timeSpent,
+        hintsUsed
+      );
+
+      res.json({
+        success: true,
+        data: result,
+      });
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  async getHint(req: AuthRequest, res: Response, next: NextFunction) {
+    try {
+      const { riddleId } = req.params;
+      const { hintNumber } = req.query;
+      const hint = await riddleService.getHint(
+        req.userId!,
+        riddleId,
+        parseInt(hintNumber as string, 10)
+      );
+
+      res.json({
+        success: true,
+        data: hint,
+      });
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  async getStats(req: AuthRequest, res: Response, next: NextFunction) {
+    try {
+      const stats = await riddleService.getUserStats(req.userId!);
+
+      res.json({
+        success: true,
+        data: { stats },
+      });
+    } catch (error) {
+      next(error);
+    }
+  }
+}
+
+export const riddleController = new RiddleController();

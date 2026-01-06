@@ -1,0 +1,191 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum SubscriptionTier {
+  FREE
+  PREMIUM
+}
+
+enum SubscriptionStatus {
+  ACTIVE
+  CANCELED
+  EXPIRED
+  TRIAL
+}
+
+enum DifficultyLevel {
+  EASY
+  MEDIUM
+  HARD
+  EXPERT
+}
+
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  password  String
+  username  String?  @unique
+
+  subscriptionTier    SubscriptionTier   @default(FREE)
+  isPremium          Boolean            @default(false)
+
+  riddlesPerDayLimit Int               @default(5)
+  riddlesTodayCount  Int               @default(0)
+  lastRiddleDate     DateTime?
+
+  totalRiddlesSolved Int               @default(0)
+  currentStreak      Int               @default(0)
+  longestStreak      Int               @default(0)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  subscriptions      Subscription[]
+  riddleAttempts     RiddleAttempt[]
+  userStats          UserStats?
+  dailyProgress      DailyProgress[]
+
+  @@index([email])
+  @@index([subscriptionTier])
+}
+
+model Subscription {
+  id                String              @id @default(cuid())
+  userId            String
+  user              User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  stripeCustomerId      String?         @unique
+  stripeSubscriptionId  String?         @unique
+  stripePriceId         String?
+
+  status            SubscriptionStatus  @default(ACTIVE)
+  tier              SubscriptionTier
+
+  currentPeriodStart DateTime?
+  currentPeriodEnd   DateTime?
+  cancelAtPeriodEnd  Boolean           @default(false)
+
+  trialStart        DateTime?
+  trialEnd          DateTime?
+
+  createdAt         DateTime           @default(now())
+  updatedAt         DateTime           @updatedAt
+
+  @@index([userId])
+  @@index([stripeCustomerId])
+  @@index([status])
+}
+
+model Riddle {
+  id            String          @id @default(cuid())
+  question      String          @db.Text
+  answer        String
+  hints         String[]
+
+  difficulty    DifficultyLevel
+  category      String?
+
+  aiGenerated   Boolean         @default(true)
+  aiModel       String?
+
+  timesAttempted Int            @default(0)
+  timesSolved    Int            @default(0)
+  averageTime    Int?
+
+  isActive      Boolean         @default(true)
+
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime        @updatedAt
+
+  attempts      RiddleAttempt[]
+
+  @@index([difficulty])
+  @@index([category])
+  @@index([isActive])
+}
+
+model RiddleAttempt {
+  id          String   @id @default(cuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  riddleId    String
+  riddle      Riddle   @relation(fields: [riddleId], references: [id], onDelete: Cascade)
+
+  solved      Boolean  @default(false)
+  attempts    Int      @default(1)
+  hintsUsed   Int      @default(0)
+  timeSpent   Int?
+
+  startedAt   DateTime @default(now())
+  completedAt DateTime?
+
+  @@index([userId])
+  @@index([riddleId])
+  @@index([solved])
+  @@index([startedAt])
+}
+
+model UserStats {
+  id                  String   @id @default(cuid())
+  userId              String   @unique
+  user                User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  totalRiddlesSolved  Int      @default(0)
+  totalAttempts       Int      @default(0)
+  totalHintsUsed      Int      @default(0)
+  totalTimeSpent      Int      @default(0)
+
+  easyRiddlesSolved   Int      @default(0)
+  mediumRiddlesSolved Int      @default(0)
+  hardRiddlesSolved   Int      @default(0)
+  expertRiddlesSolved Int      @default(0)
+
+  averageTime         Float?
+  accuracy            Float?
+
+  lastActive          DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+}
+
+model DailyProgress {
+  id              String   @id @default(cuid())
+  userId          String
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  date            DateTime @db.Date
+  riddlesSolved   Int      @default(0)
+  riddlesAttempted Int     @default(0)
+  streakActive    Boolean  @default(true)
+
+  createdAt       DateTime @default(now())
+
+  @@unique([userId, date])
+  @@index([userId, date])
+  @@index([date])
+}
+
+model Leaderboard {
+  id              String   @id @default(cuid())
+  userId          String
+  username        String
+
+  period          String
+  score           Int
+  riddlesSolved   Int
+  averageTime     Float?
+
+  rank            Int?
+
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@unique([userId, period])
+  @@index([period, score])
+  @@index([rank])
+}
