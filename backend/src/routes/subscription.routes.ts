@@ -5,14 +5,20 @@ import express from 'express';
 
 const router = Router();
 
+// RevenueCat webhook endpoint (no auth - verified by webhook signature)
 router.post(
   '/webhook',
-  express.raw({ type: 'application/json' }),
+  express.json(),
   subscriptionController.handleWebhook
 );
 
-router.post('/checkout', authenticate, subscriptionController.createCheckoutSession);
-router.post('/portal', authenticate, subscriptionController.createPortalSession);
+// Get subscription status for current user
 router.get('/status', authenticate, subscriptionController.getSubscriptionStatus);
+
+// Sync subscription status from RevenueCat (call after purchase)
+router.post('/sync', authenticate, subscriptionController.syncSubscription);
+
+// Get available offerings (informational)
+router.get('/offerings', authenticate, subscriptionController.getOfferings);
 
 export default router;

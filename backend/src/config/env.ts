@@ -14,11 +14,8 @@ const envSchema = z.object({
   JWT_SECRET: z.string().min(32),
   JWT_EXPIRES_IN: z.string().default('7d'),
 
-  STRIPE_SECRET_KEY: z.string(),
-  STRIPE_WEBHOOK_SECRET: z.string(),
-  STRIPE_PREMIUM_PRICE_ID: z.string(),
-
-  REVENUECAT_API_KEY: z.string().optional(),
+  REVENUECAT_API_KEY: z.string(),
+  REVENUECAT_WEBHOOK_AUTH_TOKEN: z.string().optional(),
   GEMINI_API_KEY: z.string(),
 
   ALLOWED_ORIGINS: z.string().default('http://localhost:19000'),
@@ -62,14 +59,9 @@ export const config = {
     expiresIn: env.JWT_EXPIRES_IN,
   },
 
-  stripe: {
-    secretKey: env.STRIPE_SECRET_KEY,
-    webhookSecret: env.STRIPE_WEBHOOK_SECRET,
-    premiumPriceId: env.STRIPE_PREMIUM_PRICE_ID,
-  },
-
   revenueCat: {
     apiKey: env.REVENUECAT_API_KEY,
+    webhookAuthToken: env.REVENUECAT_WEBHOOK_AUTH_TOKEN,
   },
 
   gemini: {

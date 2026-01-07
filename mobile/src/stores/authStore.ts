@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import { api, AuthResponse } from '../services/api';
+import { purchasesService } from '../services/purchases';
 
 interface AuthState {
   user: AuthResponse['user'] | null;
@@ -12,6 +13,7 @@ interface AuthState {
   register: (email: string, password: string, username?: string) => Promise<boolean>;
   logout: () => Promise<void>;
   loadUser: () => Promise<void>;
+  refreshUser: () => Promise<void>;
   clearError: () => void;
 }
 
@@ -34,6 +36,14 @@ export const useAuthStore = create<AuthState>((set, get) => ({
           isLoading: false,
           error: null,
         });
+
+        // Initialize RevenueCat with user ID
+        try {
+          await purchasesService.identifyUser(response.data.user.id);
+        } catch (error) {
+          console.error('Failed to identify user in RevenueCat:', error);
+        }
+
         return true;
       } else {
         set({
@@ -64,6 +74,14 @@ export const useAuthStore = create<AuthState>((set, get) => ({
           isLoading: false,
           error: null,
         });
+
+        // Initialize RevenueCat with user ID
+        try {
+          await purchasesService.identifyUser(response.data.user.id);
+        } catch (error) {
+          console.error('Failed to identify user in RevenueCat:', error);
+        }
+
         return true;
       } else {
         set({
@@ -83,6 +101,14 @@ export const useAuthStore = create<AuthState>((set, get) => ({
 
   logout: async () => {
     await api.logout();
+
+    // Logout from RevenueCat
+    try {
+      await purchasesService.logoutUser();
+    } catch (error) {
+      console.error('Failed to logout from RevenueCat:', error);
+    }
+
     set({
       user: null,
       isAuthenticated: false,
@@ -124,6 +150,20 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         isAuthenticated: false,
         isLoading: false,
       });
+    }
+  },
+
+  refreshUser: async () => {
+    try {
+      const response = await api.getProfile();
+
+      if (response.success && response.data) {
+        set({
+          user: response.data,
+        });
+      }
+    } catch (error) {
+      console.error('Failed to refresh user:', error);
     }
   },
 

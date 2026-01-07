@@ -2,12 +2,14 @@ import { View, Text, StyleSheet, SafeAreaView, TouchableOpacity, Alert } from 'r
 import { useAuthStore } from '../../src/stores/authStore';
 import { useGameStore } from '../../src/stores/gameStore';
 import { useRouter } from 'expo-router';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
+import { PurchaseModal } from '../../src/components/PurchaseModal';
 
 export default function ProfileScreen() {
-  const { user, logout } = useAuthStore();
+  const { user, logout, refreshUser } = useAuthStore();
   const { stats, fetchStats } = useGameStore();
   const router = useRouter();
+  const [showPurchaseModal, setShowPurchaseModal] = useState(false);
 
   useEffect(() => {
     if (user) {
@@ -31,6 +33,12 @@ export default function ProfileScreen() {
         },
       ]
     );
+  };
+
+  const handlePurchaseSuccess = async () => {
+    // Refresh user data to show premium status
+    await refreshUser();
+    await fetchStats();
   };
 
   return (
@@ -68,7 +76,7 @@ export default function ProfileScreen() {
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Account</Text>
           {!user?.isPremium && (
-            <TouchableOpacity style={styles.menuItem}>
+            <TouchableOpacity style={styles.menuItem} onPress={() => setShowPurchaseModal(true)}>
               <Text style={styles.menuText}>Upgrade to Premium</Text>
               <Text style={styles.menuArrow}>›</Text>
             </TouchableOpacity>
@@ -78,6 +86,12 @@ export default function ProfileScreen() {
             <Text style={styles.menuArrow}>›</Text>
           </TouchableOpacity>
         </View>
+
+        <PurchaseModal
+          visible={showPurchaseModal}
+          onClose={() => setShowPurchaseModal(false)}
+          onPurchaseSuccess={handlePurchaseSuccess}
+        />
 
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Settings</Text>

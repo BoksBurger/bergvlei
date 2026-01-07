@@ -60,9 +60,8 @@ model Subscription {
   userId            String
   user              User                @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  stripeCustomerId      String?         @unique
-  stripeSubscriptionId  String?         @unique
-  stripePriceId         String?
+  revenueCatAppUserId   String?         @unique
+  revenueCatProductId   String?
 
   status            SubscriptionStatus  @default(ACTIVE)
   tier              SubscriptionTier
@@ -78,7 +77,7 @@ model Subscription {
   updatedAt         DateTime           @updatedAt
 
   @@index([userId])
-  @@index([stripeCustomerId])
+  @@index([revenueCatAppUserId])
   @@index([status])
 }
 

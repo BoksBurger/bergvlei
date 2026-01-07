@@ -32,11 +32,22 @@ module.exports = {
       favicon: "./assets/favicon.png"
     },
     plugins: [
-      "expo-router"
+      "expo-router",
+      [
+        "react-native-purchases",
+        {
+          "apiKeys": {
+            "apple": process.env.REVENUECAT_APPLE_API_KEY,
+            "google": process.env.REVENUECAT_GOOGLE_API_KEY
+          }
+        }
+      ]
     ],
     extra: {
       GEMINI_KEY: process.env.GEMINI_KEY,
       API_URL: process.env.API_URL,
+      revenueCatAppleKey: process.env.REVENUECAT_APPLE_API_KEY,
+      revenueCatGoogleKey: process.env.REVENUECAT_GOOGLE_API_KEY,
     }
   }
 };

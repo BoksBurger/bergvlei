@@ -221,23 +221,47 @@ class ApiClient {
     return this.request<{ rank: number; score: number }>('/leaderboard/rank');
   }
 
-  // Subscription endpoints
-  async createCheckoutSession(): Promise<ApiResponse<{ url: string }>> {
-    return this.request<{ url: string }>('/subscription/checkout', {
+  // Subscription endpoints (RevenueCat)
+  async getSubscriptionStatus(): Promise<ApiResponse<{
+    isPremium: boolean;
+    tier: 'FREE' | 'PREMIUM';
+    riddlesPerDayLimit: number;
+    hasActiveEntitlements: boolean;
+    subscription: any;
+  }>> {
+    return this.request<{
+      isPremium: boolean;
+      tier: 'FREE' | 'PREMIUM';
+      riddlesPerDayLimit: number;
+      hasActiveEntitlements: boolean;
+      subscription: any;
+    }>('/subscription/status');
+  }
+
+  async syncSubscription(): Promise<ApiResponse<{
+    isPremium: boolean;
+    tier: 'FREE' | 'PREMIUM';
+    riddlesPerDayLimit: number;
+    hasActiveEntitlements: boolean;
+  }>> {
+    return this.request<{
+      isPremium: boolean;
+      tier: 'FREE' | 'PREMIUM';
+      riddlesPerDayLimit: number;
+      hasActiveEntitlements: boolean;
+    }>('/subscription/sync', {
       method: 'POST',
     });
   }
 
-  async getSubscriptionStatus(): Promise<ApiResponse<{
-    isActive: boolean;
-    tier: 'FREE' | 'PREMIUM';
-    currentPeriodEnd: string | null;
+  async getOfferings(): Promise<ApiResponse<{
+    message: string;
+    products: any;
   }>> {
     return this.request<{
-      isActive: boolean;
-      tier: 'FREE' | 'PREMIUM';
-      currentPeriodEnd: string | null;
-    }>('/subscription/status');
+      message: string;
+      products: any;
+    }>('/subscription/offerings');
   }
 }
 
