@@ -1,4 +1,3 @@
-import { RevenueCatClient } from '@revenuecat/purchases-typescript-sdk';
 import { config } from '../config/env';
 import { prisma } from '../config/database';
 import { AppError } from '../middleware/errorHandler';
@@ -6,14 +5,50 @@ import { SubscriptionStatus, SubscriptionTier } from '../types';
 import { cacheService } from './cache.service';
 import { CACHE_KEYS } from '../config/redis';
 
+interface RevenueCatSubscriber {
+  subscriber: {
+    entitlements: Record<string, any>;
+    subscriptions: Record<string, any>;
+    non_subscriptions: Record<string, any>;
+  };
+}
+
 export class RevenueCatService {
-  private client: RevenueCatClient;
+  private apiKey: string;
+  private baseUrl = 'https://api.revenuecat.com/v1';
 
   constructor() {
     if (!config.revenueCat.apiKey) {
       throw new Error('RevenueCat API key is required');
     }
-    this.client = new RevenueCatClient(config.revenueCat.apiKey);
+    this.apiKey = config.revenueCat.apiKey;
+  }
+
+  /**
+   * Get subscriber from RevenueCat REST API
+   */
+  private async getSubscriber(userId: string): Promise<RevenueCatSubscriber | null> {
+    try {
+      const response = await fetch(`${this.baseUrl}/subscribers/${userId}`, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${this.apiKey}`,
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (!response.ok) {
+        if (response.status === 404) {
+          return null;
+        }
+        throw new Error(`RevenueCat API error: ${response.status} ${response.statusText}`);
+      }
+
+      return await response.json();
+    } catch (error) {
+      console.error('RevenueCat API error:', error);
+      throw error;
+    }
   }
 
   /**
@@ -21,15 +56,17 @@ export class RevenueCatService {
    */
   async getOrCreateSubscriber(userId: string) {
     try {
-      const subscriber = await this.client.getSubscriber(userId);
-      return subscriber;
-    } catch (error: any) {
-      if (error.statusCode === 404) {
+      const subscriber = await this.getSubscriber(userId);
+      if (!subscriber) {
         // Subscriber doesn't exist, create initial subscription record
         await this.ensureSubscriptionRecord(userId);
         return null;
       }
-      throw error;
+      return subscriber;
+    } catch (error: any) {
+      console.error('Get or create subscriber error:', error);
+      await this.ensureSubscriptionRecord(userId);
+      return null;
     }
   }
 
@@ -57,7 +94,7 @@ export class RevenueCatService {
    */
   async getSubscriptionStatus(userId: string) {
     try {
-      const subscriber = await this.client.getSubscriber(userId);
+      const subscriber = await this.getSubscriber(userId);
 
       const subscription = await prisma.subscription.findFirst({
         where: { userId },
