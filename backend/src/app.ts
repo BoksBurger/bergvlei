@@ -23,11 +23,17 @@ app.use(helmet({
 
 app.use(cors({
   origin: (origin, callback) => {
-    if (!origin || config.cors.allowedOrigins.includes(origin)) {
-      callback(null, true);
-    } else {
-      callback(new Error('Not allowed by CORS'));
+    // Allow non-browser requests (no Origin) and all origins in development
+    if (!origin) {
+      return callback(null, true);
     }
+    if (config.isDevelopment) {
+      return callback(null, true);
+    }
+    if (config.cors.allowedOrigins.includes(origin)) {
+      return callback(null, true);
+    }
+    return callback(new Error('Not allowed by CORS'));
   },
   credentials: true,
 }));

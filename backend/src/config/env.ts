@@ -18,7 +18,7 @@ const envSchema = z.object({
   REVENUECAT_WEBHOOK_AUTH_TOKEN: z.string().optional(),
   GEMINI_API_KEY: z.string(),
 
-  ALLOWED_ORIGINS: z.string().default('http://localhost:19000'),
+  ALLOWED_ORIGINS: z.string().default('http://localhost:19000,http://localhost:19001,http://localhost:19002,http://localhost:3000,http://localhost:3001,http://127.0.0.1:3000,http://127.0.0.1:3001'),
 
   RATE_LIMIT_WINDOW_MS: z.string().default('900000'),
   RATE_LIMIT_MAX_REQUESTS: z.string().default('100'),
