@@ -32,16 +32,10 @@ module.exports = {
       favicon: "./assets/favicon.png"
     },
     plugins: [
-      "expo-router",
-      [
-        "react-native-purchases",
-        {
-          "apiKeys": {
-            "apple": process.env.REVENUECAT_APPLE_API_KEY,
-            "google": process.env.REVENUECAT_GOOGLE_API_KEY
-          }
-        }
-      ]
+      "expo-router"
+      // Note: react-native-purchases plugin removed temporarily
+      // Will be configured programmatically in the app or via development build
+      // See: https://www.revenuecat.com/docs/getting-started/installation/reactnative
     ],
     extra: {
       GEMINI_KEY: process.env.GEMINI_KEY,
