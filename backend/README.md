@@ -1,6 +1,6 @@
 # Bergvlei Backend API
 
-Backend API for the Bergvlei AI-powered riddle game. Built with Node.js, Express, TypeScript, PostgreSQL, Redis, and Stripe.
+Backend API for the Bergvlei AI-powered riddle game. Built with Node.js, Express, TypeScript, PostgreSQL, Redis, and RevenueCat.
 
 ## Tech Stack
 
@@ -8,7 +8,7 @@ Backend API for the Bergvlei AI-powered riddle game. Built with Node.js, Express
 - **Framework**: Express with TypeScript
 - **Database**: PostgreSQL (via Prisma ORM)
 - **Cache**: Redis (ioredis)
-- **Payments**: Stripe
+- **Payments**: RevenueCat (native in-app purchases)
 - **Authentication**: JWT
 - **Validation**: Zod
 
@@ -44,7 +44,7 @@ backend/
 │   │   ├── riddle.service.ts
 │   │   ├── cache.service.ts
 │   │   ├── leaderboard.service.ts
-│   │   └── stripe.service.ts
+│   │   └── revenuecat.service.ts
 │   ├── types/                # TypeScript types
 │   │   └── index.ts
 │   ├── app.ts                # Express app setup
@@ -79,10 +79,9 @@ REDIS_URL=redis://localhost:6379
 # JWT
 JWT_SECRET=your-super-secret-jwt-key-minimum-32-characters
 
-# Stripe
-STRIPE_SECRET_KEY=sk_test_your_stripe_secret_key
-STRIPE_WEBHOOK_SECRET=whsec_your_webhook_secret
-STRIPE_PREMIUM_PRICE_ID=price_your_premium_subscription_price_id
+# RevenueCat
+REVENUECAT_API_KEY=your_revenuecat_secret_api_key
+REVENUECAT_WEBHOOK_AUTH_TOKEN=your_optional_webhook_token
 
 # Gemini AI
 GEMINI_API_KEY=your_gemini_api_key
@@ -153,10 +152,10 @@ Authorization: Bearer <your-jwt-token>
 
 #### Subscription
 
-- `POST /api/subscription/checkout` - Create Stripe checkout session (authenticated)
-- `POST /api/subscription/portal` - Create Stripe billing portal session (authenticated)
 - `GET /api/subscription/status` - Get subscription status (authenticated)
-- `POST /api/subscription/webhook` - Stripe webhook handler (Stripe only)
+- `POST /api/subscription/sync` - Sync subscription from RevenueCat (authenticated)
+- `GET /api/subscription/offerings` - Get available subscription offerings (authenticated)
+- `POST /api/subscription/webhook` - RevenueCat webhook handler (RevenueCat only)
 
 ### Example Requests
 
@@ -209,7 +208,7 @@ curl -X POST http://localhost:3000/api/riddles/submit \
 ### Key Models
 
 - **User**: User accounts with subscription info
-- **Subscription**: Stripe subscription data
+- **Subscription**: RevenueCat subscription data
 - **Riddle**: AI-generated riddles
 - **RiddleAttempt**: User attempts at solving riddles
 - **UserStats**: Aggregate user statistics
@@ -248,21 +247,27 @@ Real-time leaderboards with Redis sorted sets:
 - Monthly
 - All-time
 
-## Stripe Integration
+## RevenueCat Integration
 
 ### Setup
 
-1. Create a Stripe account
-2. Get your API keys from Stripe Dashboard
-3. Create a Premium subscription product
-4. Configure webhook endpoint: `https://yourdomain.com/api/subscription/webhook`
-5. Add webhook secret to `.env`
+1. Create a RevenueCat account at [revenuecat.com](https://www.revenuecat.com)
+2. Create a new project and add your iOS/Android apps
+3. Get your secret API key from RevenueCat dashboard
+4. Configure products in App Store Connect and Google Play Console
+5. Link products in RevenueCat dashboard
+6. Configure webhook endpoint: `https://yourdomain.com/api/subscription/webhook`
+7. Add RevenueCat API key to `.env`
 
 ### Testing
 
-Use Stripe test mode and test cards:
-- Success: `4242 4242 4242 4242`
-- Failure: `4000 0000 0000 0002`
+Use RevenueCat sandbox mode:
+- iOS: Create sandbox tester account in App Store Connect
+- Android: Add test account in Google Play Console
+- RevenueCat automatically detects sandbox purchases
+- Test full subscription lifecycle without real charges
+
+See [REVENUECAT_SETUP_GUIDE.md](../REVENUECAT_SETUP_GUIDE.md) for detailed setup instructions.
 
 ## Deployment
 
@@ -305,9 +310,8 @@ docker run -p 3000:3000 --env-file .env bergvlei-backend
 | REDIS_URL | Yes | Redis connection string |
 | JWT_SECRET | Yes | Secret for JWT signing (min 32 chars) |
 | JWT_EXPIRES_IN | No | JWT expiration (default: 7d) |
-| STRIPE_SECRET_KEY | Yes | Stripe API secret key |
-| STRIPE_WEBHOOK_SECRET | Yes | Stripe webhook signing secret |
-| STRIPE_PREMIUM_PRICE_ID | Yes | Stripe price ID for premium tier |
+| REVENUECAT_API_KEY | Yes | RevenueCat secret API key |
+| REVENUECAT_WEBHOOK_AUTH_TOKEN | No | Optional webhook authorization token |
 | GEMINI_API_KEY | Yes | Google Gemini API key |
 | ALLOWED_ORIGINS | No | CORS allowed origins (comma-separated) |
 

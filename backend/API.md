@@ -326,10 +326,10 @@ GET /api/leaderboard/rank?period=daily
 
 ### Subscription
 
-#### Create Checkout Session
+#### Sync Subscription from RevenueCat
 
 ```http
-POST /api/subscription/checkout
+POST /api/subscription/sync
 ```
 
 **Headers:** `Authorization: Bearer <token>`
@@ -339,19 +339,27 @@ POST /api/subscription/checkout
 {
   "success": true,
   "data": {
-    "sessionId": "cs_test_abc123",
-    "url": "https://checkout.stripe.com/pay/cs_test_abc123"
+    "subscription": {
+      "id": "clx789",
+      "userId": "clx123",
+      "status": "ACTIVE",
+      "tier": "PREMIUM",
+      "currentPeriodStart": "2024-01-01T00:00:00.000Z",
+      "currentPeriodEnd": "2024-02-01T00:00:00.000Z",
+      "cancelAtPeriodEnd": false
+    },
+    "isPremium": true
   }
 }
 ```
 
 **Usage:**
-Redirect user to the returned `url` to complete payment.
+Call this endpoint after a successful in-app purchase to sync subscription status from RevenueCat to the backend.
 
-#### Create Portal Session
+#### Get Available Offerings
 
 ```http
-POST /api/subscription/portal
+GET /api/subscription/offerings
 ```
 
 **Headers:** `Authorization: Bearer <token>`
@@ -361,13 +369,19 @@ POST /api/subscription/portal
 {
   "success": true,
   "data": {
-    "url": "https://billing.stripe.com/session/abc123"
+    "offerings": [
+      {
+        "identifier": "premium_monthly",
+        "description": "Premium Monthly Subscription",
+        "price": "$4.99/month"
+      }
+    ]
   }
 }
 ```
 
 **Usage:**
-Redirect user to the returned `url` to manage their subscription.
+Informational endpoint showing available subscription products. Actual purchases are handled through RevenueCat SDK in the mobile app.
 
 #### Get Subscription Status
 
@@ -398,16 +412,16 @@ GET /api/subscription/status
 }
 ```
 
-#### Stripe Webhook
+#### RevenueCat Webhook
 
 ```http
 POST /api/subscription/webhook
 ```
 
 **Headers:**
-- `stripe-signature`: Stripe webhook signature
+- `Authorization`: Optional webhook authorization token (if configured)
 
-**Request Body:** Raw Stripe event JSON
+**Request Body:** RevenueCat webhook event JSON
 
 **Response:** `200 OK`
 ```json
@@ -416,7 +430,16 @@ POST /api/subscription/webhook
 }
 ```
 
-**Note:** This endpoint is called by Stripe, not by clients.
+**Note:** This endpoint is called by RevenueCat, not by clients. Configure the webhook URL in your RevenueCat dashboard.
+
+**Supported Events:**
+- `INITIAL_PURCHASE` - New subscription created
+- `RENEWAL` - Subscription renewed successfully
+- `CANCELLATION` - User cancelled subscription
+- `EXPIRATION` - Subscription expired
+- `BILLING_ISSUE` - Payment failed
+- `PRODUCT_CHANGE` - User upgraded/downgraded plan
+- `NON_RENEWING_PURCHASE` - One-time purchase (hint packs)
 
 ---
 
