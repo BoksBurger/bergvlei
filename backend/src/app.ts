@@ -35,47 +35,6 @@ app.use(cors({
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-/**
- * @swagger
- * /health:
- *   get:
- *     summary: Health check endpoint
- *     tags: [Health]
- *     responses:
- *       200:
- *         description: Server is healthy
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 success:
- *                   type: boolean
- *                   example: true
- *                 data:
- *                   type: object
- *                   properties:
- *                     status:
- *                       type: string
- *                       example: healthy
- *                     timestamp:
- *                       type: string
- *                       format: date-time
- *                     environment:
- *                       type: string
- *                       example: development
- */
-app.get('/health', (req, res) => {
-  res.json({
-    success: true,
-    data: {
-      status: 'healthy',
-      timestamp: new Date().toISOString(),
-      environment: config.env,
-    },
-  });
-});
-
 // Swagger documentation
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec, {
   explorer: true,
