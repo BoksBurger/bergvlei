@@ -102,22 +102,24 @@ model Subscription {
 }
 
 model User {
-  id                 String           @id
-  email              String           @unique
-  password           String
-  username           String?          @unique
-  subscriptionTier   SubscriptionTier @default(FREE)
-  isPremium          Boolean          @default(false)
-  riddlesPerDayLimit Int              @default(5)
-  riddlesTodayCount  Int              @default(0)
-  lastRiddleDate     DateTime?
-  totalRiddlesSolved Int              @default(0)
-  currentStreak      Int              @default(0)
-  longestStreak      Int              @default(0)
-  createdAt          DateTime         @default(now())
-  updatedAt          DateTime
-  DailyProgress      DailyProgress[]
-  RiddleAttempt      RiddleAttempt[]
+  id                    String           @id
+  email                 String           @unique
+  password              String
+  username              String?          @unique
+  subscriptionTier      SubscriptionTier @default(FREE)
+  isPremium             Boolean          @default(false)
+  riddlesPerDayLimit    Int              @default(5)
+  riddlesTodayCount     Int              @default(0)
+  lastRiddleDate        DateTime?
+  totalRiddlesSolved    Int              @default(0)
+  currentStreak         Int              @default(0)
+  longestStreak         Int              @default(0)
+  resetPasswordToken    String?          @unique
+  resetPasswordExpires  DateTime?
+  createdAt             DateTime         @default(now())
+  updatedAt             DateTime
+  DailyProgress         DailyProgress[]
+  RiddleAttempt         RiddleAttempt[]
   Subscription       Subscription[]
   UserStats          UserStats?
 

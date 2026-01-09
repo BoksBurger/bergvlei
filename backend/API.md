@@ -135,6 +135,68 @@ GET /api/auth/profile
 }
 ```
 
+#### Request Password Reset
+
+```http
+POST /api/auth/forgot-password
+```
+
+**Request Body:**
+```json
+{
+  "email": "user@example.com"
+}
+```
+
+**Response:** `200 OK`
+```json
+{
+  "success": true,
+  "data": {
+    "message": "If an account with that email exists, a password reset link has been sent."
+  }
+}
+```
+
+**Notes:**
+- For security, this endpoint always returns success even if the email doesn't exist
+- In production, a reset token will be sent to the user's email
+- The token expires after 1 hour
+
+#### Reset Password
+
+```http
+POST /api/auth/reset-password
+```
+
+**Request Body:**
+```json
+{
+  "token": "a1b2c3d4e5f6g7h8i9j0k1l2m3n4o5p6q7r8s9t0u1v2w3x4y5z6",
+  "password": "newSecurePassword123!"
+}
+```
+
+**Response:** `200 OK`
+```json
+{
+  "success": true,
+  "data": {
+    "message": "Password has been reset successfully"
+  }
+}
+```
+
+**Error Response:** `400 Bad Request`
+```json
+{
+  "success": false,
+  "error": {
+    "message": "Invalid or expired password reset token"
+  }
+}
+```
+
 ---
 
 ### Riddles
