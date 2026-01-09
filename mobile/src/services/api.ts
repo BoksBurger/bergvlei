@@ -212,6 +212,26 @@ class ApiClient {
     return this.request<UserStats>('/riddles/stats');
   }
 
+  // AI-powered endpoints
+  async getAIHint(riddleId: string): Promise<ApiResponse<{ hint: string; confidence: number; isAIGenerated: boolean }>> {
+    return this.request<{ hint: string; confidence: number; isAIGenerated: boolean }>(`/riddles/${riddleId}/ai-hint`);
+  }
+
+  async validateAnswerWithAI(riddleId: string, answer: string): Promise<ApiResponse<{ isCorrect: boolean; similarity: number; feedback?: string }>> {
+    return this.request<{ isCorrect: boolean; similarity: number; feedback?: string }>('/riddles/validate-ai', {
+      method: 'POST',
+      body: JSON.stringify({ riddleId, answer }),
+    });
+  }
+
+  async generateAIRiddle(difficulty?: 'EASY' | 'MEDIUM' | 'HARD' | 'EXPERT', category?: string): Promise<ApiResponse<RiddleResponse>> {
+    const params = new URLSearchParams();
+    if (difficulty) params.append('difficulty', difficulty);
+    if (category) params.append('category', category);
+    const queryString = params.toString() ? `?${params.toString()}` : '';
+    return this.request<RiddleResponse>(`/riddles/generate-ai${queryString}`);
+  }
+
   // Leaderboard endpoints
   async getLeaderboard(period: 'daily' | 'weekly' | 'monthly' | 'all-time' = 'all-time'): Promise<ApiResponse<{ leaderboard: LeaderboardEntry[] }>> {
     return this.request<{ leaderboard: LeaderboardEntry[] }>(`/leaderboard?period=${period}`);

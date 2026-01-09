@@ -56,7 +56,7 @@ export const config = {
 
   jwt: {
     secret: env.JWT_SECRET,
-    expiresIn: env.JWT_EXPIRES_IN,
+    expiresIn: env.JWT_EXPIRES_IN as string | number,
   },
 
   revenueCat: {

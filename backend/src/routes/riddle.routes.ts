@@ -203,4 +203,127 @@ router.get('/:riddleId/hint', authenticate, validate(riddleSchemas.getHint), rid
  */
 router.get('/stats', authenticate, riddleController.getStats);
 
+/**
+ * @swagger
+ * /api/riddles/{riddleId}/ai-hint:
+ *   get:
+ *     summary: Generate an AI-powered hint for a riddle (Premium only)
+ *     tags: [Riddles]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: riddleId
+ *         required: true
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *         description: The riddle ID
+ *     responses:
+ *       200:
+ *         description: AI hint generated successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     hint:
+ *                       type: string
+ *                     confidence:
+ *                       type: number
+ *                     isAIGenerated:
+ *                       type: boolean
+ *       403:
+ *         description: Premium subscription required
+ */
+router.get('/:riddleId/ai-hint', authenticate, riddleController.generateAIHint);
+
+/**
+ * @swagger
+ * /api/riddles/validate-ai:
+ *   post:
+ *     summary: Validate answer with AI fuzzy matching
+ *     tags: [Riddles]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - riddleId
+ *               - answer
+ *             properties:
+ *               riddleId:
+ *                 type: string
+ *                 format: uuid
+ *               answer:
+ *                 type: string
+ *     responses:
+ *       200:
+ *         description: Answer validated successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     isCorrect:
+ *                       type: boolean
+ *                     similarity:
+ *                       type: number
+ *                     feedback:
+ *                       type: string
+ */
+router.post('/validate-ai', authenticate, riddleController.validateAnswerWithAI);
+
+/**
+ * @swagger
+ * /api/riddles/generate-ai:
+ *   get:
+ *     summary: Generate a new riddle using AI
+ *     tags: [Riddles]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: difficulty
+ *         schema:
+ *           type: string
+ *           enum: [EASY, MEDIUM, HARD, EXPERT]
+ *         description: Difficulty level
+ *       - in: query
+ *         name: category
+ *         schema:
+ *           type: string
+ *         description: Riddle category
+ *     responses:
+ *       200:
+ *         description: AI riddle generated successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     riddle:
+ *                       type: object
+ */
+router.get('/generate-ai', authenticate, riddleLimiter, riddleController.generateAIRiddle);
+
 export default router;

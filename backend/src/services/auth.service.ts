@@ -1,5 +1,6 @@
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
+import { createId } from '@paralleldrive/cuid2';
 import { prisma } from '../config/database';
 import { config } from '../config/env';
 import { AppError } from '../middleware/errorHandler';
@@ -33,11 +34,14 @@ export class AuthService {
 
     const hashedPassword = await bcrypt.hash(password, 12);
 
+    const userId = createId();
     const user = await prisma.user.create({
       data: {
+        id: userId,
         email,
         password: hashedPassword,
         username,
+        updatedAt: new Date(),
       },
       select: {
         id: true,
@@ -51,7 +55,9 @@ export class AuthService {
 
     await prisma.userStats.create({
       data: {
+        id: createId(),
         userId: user.id,
+        updatedAt: new Date(),
       },
     });
 
@@ -111,7 +117,7 @@ export class AuthService {
 
   generateToken(payload: JwtPayload): string {
     return jwt.sign(payload, config.jwt.secret, {
-      expiresIn: config.jwt.expiresIn,
+      expiresIn: config.jwt.expiresIn as jwt.SignOptions['expiresIn'],
     });
   }
 

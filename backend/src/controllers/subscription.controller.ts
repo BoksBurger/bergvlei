@@ -1,7 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
 import { AuthRequest } from '../types';
 import { revenueCatService } from '../services/revenuecat.service';
-import { prisma } from '../config/database';
 
 export class SubscriptionController {
   /**
@@ -32,10 +31,11 @@ export class SubscriptionController {
       const authHeader = req.headers['authorization'];
 
       if (!authHeader) {
-        return res.status(400).json({
+        res.status(400).json({
           success: false,
           error: { message: 'Missing authorization header' },
         });
+        return;
       }
 
       // RevenueCat sends webhooks with Authorization: Bearer <token>
@@ -47,16 +47,18 @@ export class SubscriptionController {
         );
 
         if (!isValid) {
-          return res.status(401).json({
+          res.status(401).json({
             success: false,
             error: { message: 'Invalid webhook signature' },
           });
+          return;
         }
       } catch (error) {
-        return res.status(401).json({
+        res.status(401).json({
           success: false,
           error: { message: 'Webhook verification failed' },
         });
+        return;
       }
 
       // Process the webhook event
@@ -98,7 +100,7 @@ export class SubscriptionController {
    * Note: In RevenueCat, offerings are typically fetched client-side
    * This endpoint is for reference only
    */
-  async getOfferings(req: AuthRequest, res: Response, next: NextFunction) {
+  async getOfferings(_req: AuthRequest, res: Response, next: NextFunction) {
     try {
       // In RevenueCat, offerings are typically fetched from the mobile SDK
       // This endpoint returns metadata for the frontend

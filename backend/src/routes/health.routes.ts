@@ -6,7 +6,7 @@ const router = Router();
 
 /**
  * @swagger
- * /health:
+ * /api/health:
  *   get:
  *     summary: Basic health check endpoint
  *     description: Returns the health status of the API server
@@ -40,7 +40,7 @@ const router = Router();
  *                       description: Server uptime in seconds
  *                       example: 123.45
  */
-router.get('/', (req: Request, res: Response) => {
+router.get('/', (_req: Request, res: Response) => {
   res.json({
     success: true,
     data: {
@@ -54,7 +54,7 @@ router.get('/', (req: Request, res: Response) => {
 
 /**
  * @swagger
- * /health/db:
+ * /api/health/db:
  *   get:
  *     summary: Database health check endpoint
  *     description: Tests the database connection and returns connection status with latency
@@ -107,7 +107,7 @@ router.get('/', (req: Request, res: Response) => {
  *                       type: string
  *                       example: Connection timeout
  */
-router.get('/db', async (req: Request, res: Response) => {
+router.get('/db', async (_req: Request, res: Response) => {
   try {
     const startTime = Date.now();
 
@@ -147,7 +147,7 @@ router.get('/db', async (req: Request, res: Response) => {
 
 /**
  * @swagger
- * /health/full:
+ * /api/health/full:
  *   get:
  *     summary: Full system health check
  *     description: Comprehensive health check including server, database, and system resources
@@ -210,7 +210,7 @@ router.get('/db', async (req: Request, res: Response) => {
  *       500:
  *         description: System health check failed
  */
-router.get('/full', async (req: Request, res: Response) => {
+router.get('/full', async (_req: Request, res: Response) => {
   try {
     // Check database
     const dbStartTime = Date.now();

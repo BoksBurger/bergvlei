@@ -5,12 +5,12 @@ const startServer = async () => {
   try {
     const server = app.listen(config.port, () => {
       console.log(`
-┌─────────────────────────────────────────┐
-│  Bergvlei Backend API                   │
-│  Environment: ${config.env.padEnd(28)}│
-│  Port: ${config.port.toString().padEnd(33)}│
-│  URL: ${config.apiUrl.padEnd(34)}│
-└─────────────────────────────────────────┘
+┌────────────────────────────────────────────┐
+│  Bergvlei Backend API                      │
+│  Environment: ${config.env.padEnd(28)}   │
+│  Port: ${config.port.toString().padEnd(33)}   │
+│  URL: ${config.apiUrl.padEnd(34)}        │
+└────────────────────────────────────────────┘
       `);
     });
 

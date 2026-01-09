@@ -1,3 +1,18 @@
+/**
+ * ⚠️ DEPRECATED: This file is deprecated and should not be used.
+ *
+ * All AI functionality has been moved to the backend for security and centralized control.
+ *
+ * Instead of using functions from this file, use the API client methods:
+ * - api.getAIHint(riddleId) - Generate AI-powered hints
+ * - api.validateAnswerWithAI(riddleId, answer) - Validate answers with fuzzy matching
+ * - api.generateAIRiddle(difficulty, category) - Generate new riddles
+ *
+ * Migration: Replace direct AI calls with API calls in your components/stores.
+ *
+ * This file will be removed in a future version.
+ */
+
 import Constants from 'expo-constants';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 

@@ -28,6 +28,13 @@ export enum SubscriptionTier {
   PREMIUM = 'PREMIUM',
 }
 
+export enum SubscriptionStatus {
+  ACTIVE = 'ACTIVE',
+  CANCELED = 'CANCELED',
+  EXPIRED = 'EXPIRED',
+  TRIAL = 'TRIAL',
+}
+
 export enum DifficultyLevel {
   EASY = 'EASY',
   MEDIUM = 'MEDIUM',

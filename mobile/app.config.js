@@ -38,7 +38,6 @@ module.exports = {
       // See: https://www.revenuecat.com/docs/getting-started/installation/reactnative
     ],
     extra: {
-      GEMINI_KEY: process.env.GEMINI_KEY,
       API_URL: process.env.API_URL,
       revenueCatAppleKey: process.env.REVENUECAT_APPLE_API_KEY,
       revenueCatGoogleKey: process.env.REVENUECAT_GOOGLE_API_KEY,

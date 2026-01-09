@@ -5,7 +5,7 @@ import { AppError } from './errorHandler';
 
 export const authenticate = async (
   req: AuthRequest,
-  res: Response,
+  _res: Response,
   next: NextFunction
 ) => {
   try {
@@ -37,7 +37,7 @@ export const authenticate = async (
 
 export const requirePremium = (
   req: AuthRequest,
-  res: Response,
+  _res: Response,
   next: NextFunction
 ) => {
   if (!req.user?.isPremium) {
@@ -48,7 +48,7 @@ export const requirePremium = (
 
 export const optionalAuth = async (
   req: AuthRequest,
-  res: Response,
+  _res: Response,
   next: NextFunction
 ) => {
   try {

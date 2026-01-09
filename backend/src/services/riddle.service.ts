@@ -1,6 +1,8 @@
+import { createId } from '@paralleldrive/cuid2';
 import { prisma } from '../config/database';
 import { cacheService } from './cache.service';
 import { leaderboardService } from './leaderboard.service';
+import { aiService } from './ai.service';
 import { AppError } from '../middleware/errorHandler';
 import { DifficultyLevel } from '../types';
 import { CACHE_KEYS, CACHE_TTL } from '../config/redis';
@@ -59,6 +61,7 @@ export class RiddleService {
 
     await prisma.riddleAttempt.create({
       data: {
+        id: createId(),
         userId,
         riddleId: riddle.id,
       },
@@ -170,6 +173,7 @@ export class RiddleService {
           },
         },
         create: {
+          id: createId(),
           userId,
           date: today,
           riddlesSolved: 1,
@@ -265,6 +269,167 @@ export class RiddleService {
     await cacheService.set(CACHE_KEYS.USER_STATS(userId), result, CACHE_TTL.MEDIUM);
 
     return result;
+  }
+
+  /**
+   * Generate an AI-powered dynamic hint for a riddle
+   * This supplements static hints with contextual AI-generated hints
+   */
+  async generateAIHint(userId: string, riddleId: string) {
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+    });
+
+    if (!user) {
+      throw new AppError(404, 'User not found');
+    }
+
+    const riddle = await prisma.riddle.findUnique({
+      where: { id: riddleId },
+    });
+
+    if (!riddle) {
+      throw new AppError(404, 'Riddle not found');
+    }
+
+    // Get previous attempts to understand what hints were used
+    const attempt = await prisma.riddleAttempt.findFirst({
+      where: {
+        userId,
+        riddleId,
+        solved: false,
+      },
+      orderBy: {
+        startedAt: 'desc',
+      },
+    });
+
+    if (!attempt) {
+      throw new AppError(404, 'No active attempt found for this riddle');
+    }
+
+    // Check if user can access AI hints (premium feature)
+    if (!user.isPremium) {
+      throw new AppError(403, 'Upgrade to premium to access AI-powered hints');
+    }
+
+    // Use existing hints as context for AI
+    const previousHints = riddle.hints.slice(0, attempt.hintsUsed || 0);
+
+    try {
+      const aiHint = await aiService.generateHint({
+        riddle: riddle.question,
+        answer: riddle.answer,
+        previousHints,
+        difficulty: riddle.difficulty as 'EASY' | 'MEDIUM' | 'HARD' | 'EXPERT',
+      });
+
+      return {
+        hint: aiHint.hint,
+        confidence: aiHint.confidence,
+        isAIGenerated: true,
+      };
+    } catch (error) {
+      console.error('Error generating AI hint:', error);
+      throw new AppError(500, 'Failed to generate AI hint');
+    }
+  }
+
+  /**
+   * Validate answer with AI fuzzy matching
+   * Handles spelling variations and synonyms
+   */
+  async validateAnswerWithAI(riddleId: string, userAnswer: string) {
+    const riddle = await prisma.riddle.findUnique({
+      where: { id: riddleId },
+    });
+
+    if (!riddle) {
+      throw new AppError(404, 'Riddle not found');
+    }
+
+    try {
+      const validation = await aiService.validateAnswer({
+        userAnswer,
+        correctAnswer: riddle.answer,
+      });
+
+      return validation;
+    } catch (error) {
+      console.error('Error validating answer with AI:', error);
+      // Fallback to simple string comparison
+      const isCorrect = userAnswer.toLowerCase().trim() === riddle.answer.toLowerCase().trim();
+      return {
+        isCorrect,
+        similarity: isCorrect ? 1.0 : 0.0,
+        feedback: isCorrect ? 'Correct!' : 'Incorrect',
+      };
+    }
+  }
+
+  /**
+   * Generate a new riddle using AI
+   * This creates riddles on-demand rather than from database
+   */
+  async generateAIRiddle(userId: string, difficulty?: DifficultyLevel, category?: string) {
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+    });
+
+    if (!user) {
+      throw new AppError(404, 'User not found');
+    }
+
+    // Check daily limit
+    const dailyCount = await cacheService.getDailyRiddleCount(userId);
+    if (!user.isPremium && dailyCount >= user.riddlesPerDayLimit) {
+      throw new AppError(403, 'Daily riddle limit reached. Upgrade to premium for unlimited riddles.');
+    }
+
+    try {
+      const aiRiddle = await aiService.generateRiddle({
+        difficulty: (difficulty || 'MEDIUM') as 'EASY' | 'MEDIUM' | 'HARD' | 'EXPERT',
+        category,
+      });
+
+      // Store AI-generated riddle in database for tracking
+      const riddle = await prisma.riddle.create({
+        data: {
+          id: createId(),
+          question: aiRiddle.question,
+          answer: aiRiddle.answer,
+          difficulty: difficulty || 'MEDIUM',
+          category: aiRiddle.category,
+          hints: aiRiddle.hints,
+          isActive: true,
+          aiGenerated: true,
+          updatedAt: new Date(),
+        },
+      });
+
+      // Create attempt
+      await prisma.riddleAttempt.create({
+        data: {
+          id: createId(),
+          userId,
+          riddleId: riddle.id,
+        },
+      });
+
+      await cacheService.incrementDailyRiddleCount(userId);
+
+      return {
+        id: riddle.id,
+        question: riddle.question,
+        difficulty: riddle.difficulty,
+        category: riddle.category,
+        hintsAvailable: riddle.hints.length,
+        isAIGenerated: true,
+      };
+    } catch (error) {
+      console.error('Error generating AI riddle:', error);
+      throw new AppError(500, 'Failed to generate AI riddle');
+    }
   }
 }
 

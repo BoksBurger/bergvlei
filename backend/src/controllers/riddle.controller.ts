@@ -72,6 +72,52 @@ export class RiddleController {
       next(error);
     }
   }
+
+  async generateAIHint(req: AuthRequest, res: Response, next: NextFunction) {
+    try {
+      const { riddleId } = req.params;
+      const hint = await riddleService.generateAIHint(req.userId!, riddleId);
+
+      res.json({
+        success: true,
+        data: hint,
+      });
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  async validateAnswerWithAI(req: AuthRequest, res: Response, next: NextFunction) {
+    try {
+      const { riddleId, answer } = req.body;
+      const validation = await riddleService.validateAnswerWithAI(riddleId, answer);
+
+      res.json({
+        success: true,
+        data: validation,
+      });
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  async generateAIRiddle(req: AuthRequest, res: Response, next: NextFunction) {
+    try {
+      const { difficulty, category } = req.query;
+      const riddle = await riddleService.generateAIRiddle(
+        req.userId!,
+        difficulty as DifficultyLevel,
+        category as string
+      );
+
+      res.json({
+        success: true,
+        data: { riddle },
+      });
+    } catch (error) {
+      next(error);
+    }
+  }
 }
 
 export const riddleController = new RiddleController();

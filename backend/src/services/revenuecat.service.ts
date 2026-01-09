@@ -1,3 +1,4 @@
+import { createId } from '@paralleldrive/cuid2';
 import { config } from '../config/env';
 import { prisma } from '../config/database';
 import { AppError } from '../middleware/errorHandler';
@@ -44,7 +45,7 @@ export class RevenueCatService {
         throw new Error(`RevenueCat API error: ${response.status} ${response.statusText}`);
       }
 
-      return await response.json();
+      return (await response.json()) as RevenueCatSubscriber;
     } catch (error) {
       console.error('RevenueCat API error:', error);
       throw error;
@@ -81,9 +82,11 @@ export class RevenueCatService {
     if (!existingSubscription) {
       await prisma.subscription.create({
         data: {
+          id: createId(),
           userId,
           tier: SubscriptionTier.FREE,
           status: SubscriptionStatus.ACTIVE,
+          updatedAt: new Date(),
         },
       });
     }
@@ -351,7 +354,7 @@ export class RevenueCatService {
   /**
    * Verify webhook signature (if using RevenueCat webhook authentication)
    */
-  verifyWebhookSignature(payload: string, signature: string): boolean {
+  verifyWebhookSignature(_payload: string, signature: string): boolean {
     // RevenueCat uses authorization bearer tokens for webhooks
     // In production, you should verify the webhook signature
     // For now, we'll implement basic validation
@@ -359,6 +362,7 @@ export class RevenueCatService {
       throw new AppError(400, 'Missing webhook signature');
     }
     // TODO: Implement proper signature verification based on RevenueCat docs
+    // The _payload parameter is prefixed with _ to indicate it's intentionally unused for now
     return true;
   }
 }

@@ -1,3 +1,4 @@
+import { createId } from '@paralleldrive/cuid2';
 import { redis, CACHE_KEYS, CACHE_TTL } from '../config/redis';
 import { prisma } from '../config/database';
 
@@ -96,12 +97,14 @@ export class LeaderboardService {
               updatedAt: new Date(),
             },
             create: {
+              id: createId(),
               userId: entry.userId,
               username: entry.username,
               period,
               score: entry.score,
               riddlesSolved: entry.riddlesSolved,
               rank: entry.rank,
+              updatedAt: new Date(),
             },
           })
         )
