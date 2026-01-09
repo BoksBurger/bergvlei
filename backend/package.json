@@ -4,7 +4,7 @@
   "description": "Backend API for Bergvlei AI-powered riddle game",
   "main": "dist/server.js",
   "scripts": {
-    "dev": "tsx watch src/server.ts",
+    "dev": "nodemon",
     "build": "tsc",
     "start": "node dist/server.js",
     "prisma:generate": "prisma generate",

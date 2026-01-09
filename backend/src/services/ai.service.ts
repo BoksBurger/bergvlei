@@ -57,7 +57,7 @@ class AIService {
    */
   async generateHint(request: AIHintRequest): Promise<AIHintResponse> {
     const client = this.getClient();
-    const model = client.getGenerativeModel({ model: 'gemini-pro' });
+    const model = client.getGenerativeModel({ model: 'gemini-2.5-flash' });
 
     const { riddle, answer, previousHints, difficulty } = request;
 
@@ -101,7 +101,7 @@ Difficulty: ${difficulty}
    */
   async generateRiddle(request: AIRiddleGenerationRequest): Promise<AIRiddleGenerationResponse> {
     const client = this.getClient();
-    const model = client.getGenerativeModel({ model: 'gemini-pro' });
+    const model = client.getGenerativeModel({ model: 'gemini-2.5-flash' });
 
     const { difficulty, category } = request;
 
@@ -178,7 +178,7 @@ Make the riddle creative, engaging, and fun to solve. Ensure hints progressively
 
     // Use AI for fuzzy matching on close answers
     const client = this.getClient();
-    const model = client.getGenerativeModel({ model: 'gemini-pro' });
+    const model = client.getGenerativeModel({ model: 'gemini-2.5-flash' });
 
     const prompt = `You are validating a riddle answer. Determine if the user's answer is correct or close enough.
 
