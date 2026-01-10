@@ -103,16 +103,44 @@ export class RiddleController {
 
   async generateAIRiddle(req: AuthRequest, res: Response, next: NextFunction) {
     try {
-      const { difficulty, category } = req.query;
+      const { difficulty, category, customAnswer } = req.query;
       const riddle = await riddleService.generateAIRiddle(
         req.userId!,
         difficulty as DifficultyLevel,
-        category as string
+        category as string,
+        customAnswer as string
       );
 
       res.json({
         success: true,
         data: { riddle },
+      });
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  async saveCustomRiddle(req: AuthRequest, res: Response, next: NextFunction) {
+    try {
+      const { riddleId } = req.body;
+      const result = await riddleService.saveCustomRiddle(req.userId!, riddleId);
+
+      res.json({
+        success: true,
+        data: result,
+      });
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  async getSavedRiddles(req: AuthRequest, res: Response, next: NextFunction) {
+    try {
+      const savedRiddles = await riddleService.getSavedRiddles(req.userId!);
+
+      res.json({
+        success: true,
+        data: { savedRiddles },
       });
     } catch (error) {
       next(error);

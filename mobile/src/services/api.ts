@@ -224,12 +224,24 @@ class ApiClient {
     });
   }
 
-  async generateAIRiddle(difficulty?: 'EASY' | 'MEDIUM' | 'HARD' | 'EXPERT', category?: string): Promise<ApiResponse<RiddleResponse>> {
+  async generateAIRiddle(difficulty?: 'EASY' | 'MEDIUM' | 'HARD' | 'EXPERT', category?: string, customAnswer?: string): Promise<ApiResponse<RiddleResponse>> {
     const params = new URLSearchParams();
     if (difficulty) params.append('difficulty', difficulty);
     if (category) params.append('category', category);
+    if (customAnswer) params.append('customAnswer', customAnswer);
     const queryString = params.toString() ? `?${params.toString()}` : '';
     return this.request<RiddleResponse>(`/riddles/generate-ai${queryString}`);
+  }
+
+  async saveCustomRiddle(riddleId: string): Promise<ApiResponse<{ message: string }>> {
+    return this.request<{ message: string }>('/riddles/save-custom', {
+      method: 'POST',
+      body: JSON.stringify({ riddleId }),
+    });
+  }
+
+  async getSavedRiddles(): Promise<ApiResponse<{ savedRiddles: RiddleResponse[] }>> {
+    return this.request<{ savedRiddles: RiddleResponse[] }>('/riddles/saved-riddles');
   }
 
   // Leaderboard endpoints

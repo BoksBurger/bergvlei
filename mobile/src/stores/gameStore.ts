@@ -15,6 +15,8 @@ interface GameState {
   currentDifficulty: 'EASY' | 'MEDIUM' | 'HARD';
   stats: UserStats | null;
   riddleStartTime: number | null;
+  customRiddleMode: boolean;
+  savedCustomRiddles: RiddleResponse[];
 
   // Actions
   fetchNewRiddle: (difficulty?: 'EASY' | 'MEDIUM' | 'HARD') => Promise<boolean>;
@@ -33,6 +35,10 @@ interface GameState {
   resetDailyProgress: () => void;
   resetCurrentGame: () => void;
   clearError: () => void;
+  generateCustomRiddle: (difficulty: 'EASY' | 'MEDIUM' | 'HARD' | 'EXPERT', categoryOrAnswer: string, isCustomAnswer: boolean) => Promise<RiddleResponse | null>;
+  saveCustomRiddle: (riddleId: string) => Promise<boolean>;
+  playCustomRiddle: (riddle: RiddleResponse) => void;
+  loadSavedRiddles: () => Promise<void>;
 }
 
 export const useGameStore = create<GameState>((set, get) => ({
@@ -48,6 +54,8 @@ export const useGameStore = create<GameState>((set, get) => ({
   currentDifficulty: 'EASY',
   stats: null,
   riddleStartTime: null,
+  customRiddleMode: false,
+  savedCustomRiddles: [],
 
   // Fetch a new riddle from backend
   fetchNewRiddle: async (difficulty?: 'EASY' | 'MEDIUM' | 'HARD') => {
@@ -223,7 +231,90 @@ export const useGameStore = create<GameState>((set, get) => ({
     currentHints: [],
     hintsUsed: 0,
     riddleStartTime: null,
+    customRiddleMode: false,
   }),
 
   clearError: () => set({ error: null }),
+
+  // Generate custom AI riddle
+  generateCustomRiddle: async (difficulty, categoryOrAnswer, isCustomAnswer) => {
+    set({ isLoading: true, error: null });
+
+    try {
+      const response = isCustomAnswer
+        ? await api.generateAIRiddle(difficulty, undefined, categoryOrAnswer)
+        : await api.generateAIRiddle(difficulty, categoryOrAnswer);
+
+      if (response.success && response.data) {
+        set({ isLoading: false });
+        return response.data;
+      } else {
+        set({
+          error: response.error?.message || 'Failed to generate riddle',
+          isLoading: false
+        });
+        return null;
+      }
+    } catch (error) {
+      set({
+        error: error instanceof Error ? error.message : 'An error occurred',
+        isLoading: false,
+      });
+      return null;
+    }
+  },
+
+  // Save custom riddle for later
+  saveCustomRiddle: async (riddleId) => {
+    set({ isLoading: true, error: null });
+
+    try {
+      const response = await api.saveCustomRiddle(riddleId);
+
+      if (response.success) {
+        set({ isLoading: false });
+        // Reload saved riddles
+        await get().loadSavedRiddles();
+        return true;
+      } else {
+        set({
+          error: response.error?.message || 'Failed to save riddle',
+          isLoading: false
+        });
+        return false;
+      }
+    } catch (error) {
+      set({
+        error: error instanceof Error ? error.message : 'An error occurred',
+        isLoading: false,
+      });
+      return false;
+    }
+  },
+
+  // Play a custom riddle immediately
+  playCustomRiddle: (riddle) => {
+    set({
+      currentRiddle: riddle,
+      currentHints: [],
+      hintsUsed: 0,
+      hintsRemaining: 3,
+      riddleStartTime: Date.now(),
+      customRiddleMode: true,
+      error: null,
+    });
+  },
+
+  // Load user's saved riddles
+  loadSavedRiddles: async () => {
+    try {
+      const response = await api.getSavedRiddles();
+
+      if (response.success && response.data) {
+        set({ savedCustomRiddles: response.data.savedRiddles });
+      }
+    } catch (error) {
+      console.error('Error loading saved riddles:', error);
+    }
+  },
 }));

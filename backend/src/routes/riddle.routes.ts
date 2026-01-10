@@ -308,6 +308,11 @@ router.post('/validate-ai', authenticate, riddleController.validateAnswerWithAI)
  *         schema:
  *           type: string
  *         description: Riddle category
+ *       - in: query
+ *         name: customAnswer
+ *         schema:
+ *           type: string
+ *         description: Custom answer to generate riddle around
  *     responses:
  *       200:
  *         description: AI riddle generated successfully
@@ -325,5 +330,45 @@ router.post('/validate-ai', authenticate, riddleController.validateAnswerWithAI)
  *                       type: object
  */
 router.get('/generate-ai', authenticate, riddleLimiter, riddleController.generateAIRiddle);
+
+/**
+ * @swagger
+ * /api/riddles/save-custom:
+ *   post:
+ *     summary: Save a custom riddle to user's collection
+ *     tags: [Riddles]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - riddleId
+ *             properties:
+ *               riddleId:
+ *                 type: string
+ *                 format: uuid
+ *     responses:
+ *       200:
+ *         description: Riddle saved successfully
+ */
+router.post('/save-custom', authenticate, riddleController.saveCustomRiddle);
+
+/**
+ * @swagger
+ * /api/riddles/saved-riddles:
+ *   get:
+ *     summary: Get user's saved riddles
+ *     tags: [Riddles]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Saved riddles retrieved successfully
+ */
+router.get('/saved-riddles', authenticate, riddleController.getSavedRiddles);
 
 export default router;

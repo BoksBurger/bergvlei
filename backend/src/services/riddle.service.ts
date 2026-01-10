@@ -371,7 +371,7 @@ export class RiddleService {
    * Generate a new riddle using AI
    * This creates riddles on-demand rather than from database
    */
-  async generateAIRiddle(userId: string, difficulty?: DifficultyLevel, category?: string) {
+  async generateAIRiddle(userId: string, difficulty?: DifficultyLevel, category?: string, customAnswer?: string) {
     const user = await prisma.user.findUnique({
       where: { id: userId },
     });
@@ -390,6 +390,7 @@ export class RiddleService {
       const aiRiddle = await aiService.generateRiddle({
         difficulty: (difficulty || 'MEDIUM') as 'EASY' | 'MEDIUM' | 'HARD' | 'EXPERT',
         category,
+        customAnswer,
       });
 
       // Store AI-generated riddle in database for tracking
@@ -430,6 +431,78 @@ export class RiddleService {
       console.error('Error generating AI riddle:', error);
       throw new AppError(500, 'Failed to generate AI riddle');
     }
+  }
+
+  /**
+   * Save a custom riddle to user's collection
+   */
+  async saveCustomRiddle(userId: string, riddleId: string) {
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+    });
+
+    if (!user) {
+      throw new AppError(404, 'User not found');
+    }
+
+    const riddle = await prisma.riddle.findUnique({
+      where: { id: riddleId },
+    });
+
+    if (!riddle) {
+      throw new AppError(404, 'Riddle not found');
+    }
+
+    // Check if riddle is already saved
+    const existing = await prisma.savedRiddle.findUnique({
+      where: {
+        userId_riddleId: {
+          userId,
+          riddleId,
+        },
+      },
+    });
+
+    if (existing) {
+      throw new AppError(400, 'Riddle is already saved');
+    }
+
+    // Save the riddle
+    const savedRiddle = await prisma.savedRiddle.create({
+      data: {
+        id: createId(),
+        userId,
+        riddleId,
+      },
+    });
+
+    return {
+      message: 'Riddle saved successfully!',
+      savedRiddle,
+    };
+  }
+
+  /**
+   * Get user's saved riddles
+   */
+  async getSavedRiddles(userId: string) {
+    const savedRiddles = await prisma.savedRiddle.findMany({
+      where: { userId },
+      include: {
+        Riddle: true,
+      },
+      orderBy: {
+        savedAt: 'desc',
+      },
+    });
+
+    return savedRiddles.map((sr) => ({
+      id: sr.Riddle.id,
+      question: sr.Riddle.question,
+      difficulty: sr.Riddle.difficulty,
+      category: sr.Riddle.category,
+      savedAt: sr.savedAt,
+    }));
   }
 }
 

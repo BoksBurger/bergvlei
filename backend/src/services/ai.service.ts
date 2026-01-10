@@ -17,6 +17,7 @@ export interface AIHintResponse {
 export interface AIRiddleGenerationRequest {
   difficulty: 'EASY' | 'MEDIUM' | 'HARD' | 'EXPERT';
   category?: string;
+  customAnswer?: string;
 }
 
 export interface AIRiddleGenerationResponse {
@@ -103,7 +104,7 @@ Difficulty: ${difficulty}
     const client = this.getClient();
     const model = client.getGenerativeModel({ model: 'gemini-2.5-flash' });
 
-    const { difficulty, category } = request;
+    const { difficulty, category, customAnswer } = request;
 
     const difficultyDescription = {
       EASY: 'simple and straightforward, suitable for beginners',
@@ -114,7 +115,10 @@ Difficulty: ${difficulty}
 
     let prompt = `Create a new riddle with ${difficulty} difficulty (${difficultyDescription[difficulty]}).`;
 
-    if (category) {
+    if (customAnswer) {
+      prompt += `\nThe answer to the riddle MUST be: "${customAnswer}"`;
+      prompt += `\nCreate a clever and creative riddle that leads to this specific answer.`;
+    } else if (category) {
       prompt += `\nCategory: ${category}`;
     }
 

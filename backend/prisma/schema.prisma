@@ -55,6 +55,7 @@ model Riddle {
   createdAt      DateTime        @default(now())
   updatedAt      DateTime
   RiddleAttempt  RiddleAttempt[]
+  SavedRiddle    SavedRiddle[]
 
   @@index([category])
   @@index([difficulty])
@@ -120,8 +121,9 @@ model User {
   updatedAt             DateTime
   DailyProgress         DailyProgress[]
   RiddleAttempt         RiddleAttempt[]
-  Subscription       Subscription[]
-  UserStats          UserStats?
+  Subscription          Subscription[]
+  UserStats             UserStats?
+  SavedRiddle           SavedRiddle[]
 
   @@index([email])
   @@index([subscriptionTier])
@@ -143,6 +145,18 @@ model UserStats {
   lastActive          DateTime @default(now())
   updatedAt           DateTime
   User                User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model SavedRiddle {
+  id        String   @id
+  userId    String
+  riddleId  String
+  savedAt   DateTime @default(now())
+  User      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  Riddle    Riddle   @relation(fields: [riddleId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, riddleId])
+  @@index([userId])
 }
 
 enum DifficultyLevel {
