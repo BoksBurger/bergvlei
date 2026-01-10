@@ -2,7 +2,7 @@ import Constants from 'expo-constants';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 // API Configuration
-const API_URL = Constants.expoConfig?.extra?.API_URL || 'http://localhost:3001/api';
+const API_URL = Constants.expoConfig?.extra?.API_URL || 'http://192.168.8.109:3001/api';//'http://localhost:3001/api';
 const TOKEN_KEY = '@bergvlei_token';
 
 // Type definitions matching backend
@@ -119,9 +119,9 @@ class ApiClient {
     endpoint: string,
     options: RequestInit = {}
   ): Promise<ApiResponse<T>> {
-    const headers: HeadersInit = {
+    const headers: Record<string, string> = {
       'Content-Type': 'application/json',
-      ...options.headers,
+      ...(options.headers as Record<string, string>),
     };
 
     // Add auth token if available
